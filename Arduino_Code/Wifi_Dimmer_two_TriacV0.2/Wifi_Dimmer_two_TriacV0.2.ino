@@ -3,6 +3,7 @@ Code for Wifi two triac 2 amps mini board
 This code is for ESP8266
 Firmware Version: 0.2
 Hardware Version: 0.1
+use Board as Node mcu 1.0
 
 Code Edited By :Naren N Nayak
 Date: 24/10/2017
