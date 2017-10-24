@@ -7,9 +7,9 @@ Firmware Version: 0.3
 Hardware Version: 0.1
 
 Code Edited By :Naren N Nayak
-Date: 23/10/2017
+Date: 24/10/2017
 Last Edited By:Naren N Nayak
-Date: 22/10/2017
+Date: 23/10/2017
 
 */ 
 
@@ -38,7 +38,7 @@ String serialReceived;
 String serialReceived1;
 String Dimmer_value_temp;
 String Dimmer_value;
-
+String regulator_value_temp;
 /*POT Variable */
 String regulator_value;
 
@@ -47,7 +47,9 @@ int freqStep = 75;//75*5 as prescalar is 16 for 80MHZ
 volatile int dim_value = 0;
 int dimming = 115;
 volatile boolean zero_cross = 0;
-
+volatile int int_regulator=0;
+volatile int int_regulator_temp;
+volatile int i=1;
 /*Flags for Dimmer virtual switch concept */
 volatile boolean dimmer_value_changed =false; 
 volatile boolean regulator_value_changed =false;
@@ -86,6 +88,7 @@ void zero_cross_detect()
 /*Timer Interrupt Function used to trigger the triac for Dimming*/
 void dim_check() 
 {
+  /*For Dimmer */
   if (zero_cross == true) 
   {
     if (dim_value >= dimming) 
@@ -106,14 +109,23 @@ void dim_check()
 void loop() 
 {
 
-  /* Multi by 2 so that 2.5V level gets to 5V 10K 10K divider 
-     Div by 11 so that value doesnt exceed 99 asdimmer range is 0-99
-     Div and mul by 10 gives better variation in Pot value */
+/* Multi by 2 so that 2.5V level gets to 5V 10K 10K divider 
+   Div by 11 so that value doesnt exceed 99 asdimmer range is 0-99
+   Div and mul by 10 gives better variation in Pot value */
      
-  int int_regulator=((round(((((analogRead(SWITCH_INPIN2))*2))/11)/10))*10); 
-  String regulator_value_temp="Dimmer:"+String(int_regulator);
-
-
+   
+   int_regulator_temp= ((round(((((analogRead(SWITCH_INPIN2))*2))/11)/10))*10); 
+   int_regulator+=int_regulator_temp;
+   i++;
+   
+   if(i>=100)
+   {
+    int_regulator=(round((int_regulator/100)*10)/10);
+    regulator_value_temp="Dimmer:"+String((int_regulator));
+    i=0;
+    //Serial.println("Regulator value to "+regulator_value);
+   }
+   
 /*############### Flag setting for Dimmable Triac through Pot ###############*/
   
   if(regulator_value_temp!=regulator_value)
@@ -189,7 +201,7 @@ void loop()
   }
 
   
-/*####################### Non Dimmable Triac ##################################*/
+/*####################### Dimmable Triac ##################################*/
   
   if (Dimmer_value.substring(0, 7) == "Dimmer:" && dimmer_value_changed == true )
   {

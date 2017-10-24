@@ -5,7 +5,7 @@ Firmware Version: 0.2
 Hardware Version: 0.1
 
 Code Edited By :Naren N Nayak
-Date: 22/10/2017
+Date: 24/10/2017
 Last Edited By:Goutam 
 Date: 
 
@@ -64,13 +64,11 @@ extern "C" {
 String hostName ="Armtronix"; //The MQTT ID -> MAC adress will be added to make it kind of unique
 int iotMode=0; //IOT mode: 0 = Web control, 1 = MQTT (No const since it can change during runtime)
 //select GPIO's
-#define OUTPIN_TRIAC 13 //output pin of Triac
 #define INPIN 0  // input pin (push button)
-#define OUTPIN_SSR 14  //output pin of SSR
 #define RESTARTDELAY 3 //minimal time in sec for button press to reset
 #define HUMANPRESSDELAY 50 // the delay in ms untill the press should be handled as a normal push by human. Button debounce. !!! Needs to be less than RESTARTDELAY & RESETDELAY!!!
 #define RESETDELAY 20 //Minimal time in sec for button press to reset all settings and boot to config mode
-#define AC_ZERO_CROSS  12   // input to Opto Triac pin   
+#define RESET_PIN 16
 
 //##### Object instances ##### 
 MDNSResponder mdns;
@@ -113,12 +111,8 @@ const char* otaServerIndex = "<form method='POST' action='/update' enctype='mult
 void setup() {
   Serial.begin(115200);
   delay(10);
-  // prepare GPIO2
-  pinMode(OUTPIN_TRIAC, OUTPUT);
-  pinMode(OUTPIN_SSR, OUTPUT);
-  pinMode(AC_ZERO_CROSS, INPUT);
-  pinMode(INPIN, INPUT_PULLUP);
-  //digitalWrite(OUTLED, HIGH);
+  pinMode(RESET_PIN, OUTPUT); 
+  digitalWrite(RESET_PIN, HIGH);
   btn_timer.attach(0.05, btn_handle);
   Debugln("DEBUG: Entering loadConfig()");
   if (!SPIFFS.begin()) {
@@ -158,40 +152,7 @@ void InitInterrupt(timercallback handler,int Step )
   timer1_write(Step);//max 8388607 //75*5
 }
 
-void  ICACHE_RAM_ATTR do_on_delay()
-{
-  //digitalWrite(BUILTIN_LED, !digitalRead(BUILTIN_LED));
-  
-  if(zero_cross == true) 
-  {              
-    if(i>=dimming) 
-    {  
-                       
-     digitalWrite(OUTPIN_TRIAC, HIGH); // turn on light       
-     i=0;  // reset time step counter                         
-     zero_cross = false; //reset zero cross detection
-     delayMicroseconds(10);         // triac On propogation delay
-     digitalWrite(OUTPIN_TRIAC, LOW);    // triac Off
-    } 
-    else 
-    {
-     i++; // increment time step counter 
-     digitalWrite(OUTPIN_TRIAC, LOW);    // triac Off        
-                 
-    }                                
-  }    
-}
 
-void zero_crosss_int()  // function to be fired at the zero crossing to dim the light
-{
-  
- zero_cross = true; 
- i=0;
-  //InitInterrupt(do_something);
- digitalWrite(OUTPIN_TRIAC, LOW);  
- InitInterrupt(do_on_delay,freqStep);
- 
-}
 
 void btn_handle()
 {
@@ -202,14 +163,6 @@ void btn_handle()
       Serial.print("button pressed "); 
       Serial.print(count*0.05); 
       Serial.println(" Sec."); 
-    
-      Serial.print("Light is ");
-      Serial.println(digitalRead(OUTPIN_SSR));
-      
-      Serial.print("Switching light to "); 
-      Serial.println(!digitalRead(OUTPIN_SSR));
-      digitalWrite(OUTPIN_SSR, !digitalRead(OUTPIN_SSR)); 
-      state = digitalRead(OUTPIN_SSR);
       if(iotMode==1 && mqttClient.connected()){
         toPub=1;        
         Debugln("DEBUG: toPub set to 1");
@@ -258,6 +211,10 @@ void loop() {
       //Debugln("DEBUG: loop() Web mode requesthandling ");
       server.handleClient();
       delay(1);
+      if(esid != "" && WiFi.status() != WL_CONNECTED) //wifi reconnect part
+      {
+        Scan_Wifi_Networks();
+      }
     } else if (iotMode==1 && webtypeGlob != 1 && otaFlag !=1){
           //Debugln("DEBUG: loop() MQTT mode requesthandling ");
           if (!connectMQTT()){

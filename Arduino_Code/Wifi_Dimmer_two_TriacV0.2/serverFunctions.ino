@@ -282,70 +282,51 @@ void webHandleClearRom(){
 
 void webHandleGpio(){
   String s;
+  int state_sw;
+  int state_dimmer;
+  int state_led;
    // Set GPIO according to the request
     if (server.arg("state_sw")=="1" || server.arg("state_sw")=="0" ) {
-      int state_sw = server.arg("state_sw").toInt();
-      detachInterrupt(AC_ZERO_CROSS);
-      digitalWrite(OUTPIN_TRIAC, state_sw);
-     
-      Serial.print("Light switched via web request to  ");      
-      Serial.println(state_sw); 
+         state_sw = server.arg("state_sw").toInt();       
       if (state_sw == LOW)
       {
-      Serial.print("Dimmer:0");
+      Serial.println("Dimmer:0");
       }
       else
       {
-      Serial.print("Dimmer:99");
+      Serial.println("Dimmer:99");
       }
           
     }
      if (server.arg("state_led")=="1" || server.arg("state_led")=="0" ) {
-      int state_led = server.arg("state_led").toInt();
-      digitalWrite(OUTPIN_SSR, state_led);
-      Serial.print("Light switched via web request to  ");      
-      Serial.println(state_led);
+      state_led = server.arg("state_led").toInt();
       Serial.print("R_1 switched via web request to ");
       Serial.println(state_led);      
     }
    if (server.arg("state_dimmer") !="") {
-      int state_dimmer = server.arg("state_dimmer").toInt();
+      state_dimmer = server.arg("state_dimmer").toInt();
       //digitalWrite(BUILTIN_LED, state_led);
      // Serial.print("Light switched via web request to  "); 
       Serial.print("Dimmer:");     
       Serial.println(state_dimmer); 
       dimming =127-state_dimmer;
-      delay(5); 
-      if(dimming>=120)
-      {
-      detachInterrupt(AC_ZERO_CROSS);
-      digitalWrite(OUTPIN_TRIAC, LOW);
-      }
-      else if(dimming<=10)
-      {
-      detachInterrupt(AC_ZERO_CROSS);
-      digitalWrite(OUTPIN_TRIAC, HIGH);
-      }
-      else
-      {
-      attachInterrupt(AC_ZERO_CROSS, zero_crosss_int, RISING); 
-      }   
+      delay(5);   
     }
      
     s = "TRIAC is now ";
-    s += (digitalRead(OUTPIN_TRIAC))?"ON":"OFF";
+    s += (state_dimmer)?"ON":"OFF";
     s += "<p>Change to <form action='gpio'><input type='radio' name='state_sw' value='1' ";
-    s += (digitalRead(OUTPIN_TRIAC))?"checked":"";
+    s += (state_dimmer)?"checked":"";
     s += ">TRIAC_ON<input type='radio' name='state_sw' value='0' ";
-    s += (digitalRead(OUTPIN_TRIAC))?"":"checked";
+    s += (state_dimmer)?"":"checked";
     s += ">TRIAC_OFF <input type='submit' value='Submit'></form></p>";  
 
     s += "SSR is now ";
-    s += (digitalRead(OUTPIN_SSR))?"ON":"OFF";
+    s += (state_led)?"ON":"OFF";
     s += "<p>Change to <form action='gpio'><input type='radio' name='state_led' value='1' ";
-    s += (digitalRead(OUTPIN_SSR))?"checked":"";
+    s += (state_led)?"checked":"";
     s += ">SSR_ON <input type='radio' name='state_led' value='0' ";
-    s += (digitalRead(OUTPIN_SSR))?"":"checked";
+    s += (state_led)?"":"checked";
     s += ">SSR_OFF <input type='submit' value='Submit'></form></p>"; 
     
     s += "<p>Change to <form action='gpio' name='state' method='GET' oninput='showValue(state_dimmer.value)'><input type='range' name='state_dimmer' id='state_dimmer' min='0' max='90' step='5' value='0'  >" ; 

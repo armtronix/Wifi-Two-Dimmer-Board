@@ -29,7 +29,7 @@ void disconnectMQTT() {
 
 void mqtt_handler() {
   if (toPub == 1) {
-    Debugln("DEBUG: Publishing state via MWTT");
+    Debugln("DEBUG: Publishing state via MQTT");
     if (pubState()) {
       toPub = 0;
     }
@@ -49,80 +49,28 @@ void mqtt_arrived(char* subTopic, byte* payload, unsigned int length) { // handl
   buf[i] = '\0';
   String msgString = String(buf);
   Serial.println(" message: " + msgString);
-  if (msgString.substring(0,6) == "R13_ON") {
-//    detachInterrupt(AC_ZERO_CROSS);
-//    Serial.print("Light is ");
-//    Serial.println(digitalRead(OUTPIN_TRIAC));
-//    Serial.print("Switching Triac to ");
-//    Serial.println("high");
-//    digitalWrite(OUTPIN_TRIAC, 1);
+  
+  if (msgString.substring(0,6) == "R13_ON") 
+  {
     Serial.println("Dimmer:99");
-  } else if (msgString.substring(0,7) == "R13_OFF") {
-//    detachInterrupt(AC_ZERO_CROSS);
-//    Serial.print("Light is ");
-//    Serial.println(digitalRead(OUTPIN_TRIAC));
-//    Serial.print("Switching Triac to ");
-//    Serial.println("low");
-//    digitalWrite(OUTPIN_TRIAC, 0);
+  } 
+  else if (msgString.substring(0,7) == "R13_OFF") 
+  {
     Serial.println("Dimmer:0");
   }
-  else if (msgString.substring(0,6) == "R14_ON") {
-//    Serial.print("Led is ");
-//    Serial.println(digitalRead(OUTPIN_SSR));
-//    Serial.print("Switching SSR to ");
-//    Serial.println("high");
-//    digitalWrite(OUTPIN_SSR, 1);
+  else if (msgString.substring(0,6) == "R14_ON") 
+  {
     Serial.println("R_1 switched via web request to 1");
-  } else if (msgString.substring(0,7) == "R14_OFF") {
-//    Serial.print("Led is ");
-//    Serial.println(digitalRead(OUTPIN_SSR));
-//    Serial.print("Switching SSR to ");
-//    Serial.println("low");
-//    digitalWrite(OUTPIN_SSR, 0);
+  } 
+  else if (msgString.substring(0,7) == "R14_OFF") 
+  {
     Serial.println("R_1 switched via web request to 0");
-
   }
   else if (msgString.substring(0,7) == "Dimmer:")
-//  { 
+  { 
        Serial.print("Dimmer:");
-       Serial.println(msgString.substring(7,9));
-//    //String dim_str = getValue(msgString,'8', 0);
-//    //String dim_val_str = getValue(msgString,'8', 1);
-//    String dim_val_str = msgString;
-//    String dim_str ="4";//debug 
-//    if(dim_str =="4")
-//    {
-//     int dim_val = dim_val_str.toInt();
-//     if(dim_val>=0 && dim_val <=100)
-//     {
-//      Serial.print("Dimmer:");     
-//      Serial.println(dim_val);
-//      dimming =127-dim_val;
-//      delay(5); 
-//      if(dimming>=120)
-//      {
-//      detachInterrupt(AC_ZERO_CROSS);
-//      digitalWrite(OUTPIN_TRIAC, LOW);
-//      }
-//      else if(dimming<=10)
-//      {
-//      detachInterrupt(AC_ZERO_CROSS);
-//      digitalWrite(OUTPIN_TRIAC, HIGH);
-//      }
-//      else
-//      {
-//      attachInterrupt(AC_ZERO_CROSS, zero_crosss_int, RISING); 
-//      }   
-//      Serial.println(dim_val);
-//     }
-//    else
-//     {
-//     }
-//    } 
-//    }
-    
-    
-  
+       Serial.println(msgString.substring(7,9));    
+  }
 }
 
 boolean pubState() { //Publish the current state of the light
@@ -134,17 +82,21 @@ boolean pubState() { //Publish the current state of the light
       return false;
     }
   }
-  if (mqttClient.connected()) {
-    //String state = (digitalRead(OUTPIN))?"1":"0";
+  if (mqttClient.connected()) 
+  {
     Serial.println("To publish state " + state );
     if (mqttClient.publish((char*)pubTopic.c_str(), (char*) state.c_str())) {
       Serial.println("Publish state OK");
       return true;
-    } else {
+    } 
+    else 
+    {
       Serial.println("Publish state NOK");
       return false;
     }
-  } else {
+  } 
+  else 
+  {
     Serial.println("Publish state NOK");
     Serial.println("No MQTT connection.");
   }
