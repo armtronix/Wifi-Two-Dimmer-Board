@@ -112,6 +112,7 @@ const char* otaServerIndex = "<form method='POST' action='/update' enctype='mult
 void setup() {
   Serial.begin(115200);
   delay(10);
+  WiFi.printDiag(Serial);
   pinMode(RESET_PIN, OUTPUT); 
   digitalWrite(RESET_PIN, HIGH);
   btn_timer.attach(0.05, btn_handle);
